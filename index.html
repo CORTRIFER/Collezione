@@ -199,13 +199,13 @@
 		}
         
         .model-name::after {
-            content: "⋮";
+            content: "≡";  
+			color: #2745a6;    /* Puoi anche cambiare colore */
             position: absolute;
             right: 0;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 18px;
-            color: #666;
+            font-size: 20px;
         }
         
         .model-type {
@@ -558,59 +558,84 @@
     
     <!-- MODALE DETTAGLI MODELLO (verrà creata dinamicamente) -->
     
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    
-    <script>
-        const FALLBACK_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E";
-        let currentEditingModelId = null;
-        
-        // Recupera i modelli
+   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    const FALLBACK_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E";
+    let currentEditingModelId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Riferimenti ai campi della modale
+        const engineTypeSelect = document.getElementById('engineType');
+        const engineExtraDiv = document.getElementById('engineExtra');
+        const engineExtraLabel = document.getElementById('engineExtraLabel');
+        const engineExtraInput = document.getElementById('engineExtraInput');
+
+        // Aggiornamento campo extra in base al tipo di motore
+        let tempEngineValues = {
+			'elettrico': '',
+			'a Scoppio': ''
+		};
+
+		engineTypeSelect.addEventListener('change', () => {
+			const val = engineTypeSelect.value;
+
+			// Salva il valore corrente prima di cambiare tipo
+			if (val === 'elettrico' || val === 'a Scoppio') {
+				const otherType = val === 'elettrico' ? 'a Scoppio' : 'elettrico';
+				tempEngineValues[otherType] = engineExtraInput.value; // salva valore precedente
+			}
+
+			if (val === 'elettrico') {
+				engineExtraLabel.textContent = 'Batteria del Motore';
+				engineExtraInput.placeholder = 'Inserisci capacità batteria (es. 2200 mAh)';
+				engineExtraInput.value = tempEngineValues['elettrico']; // ripristina se presente
+				engineExtraDiv.style.display = 'block';
+			} else if (val === 'a Scoppio') {
+				engineExtraLabel.textContent = 'Cilindrata del Motore';
+				engineExtraInput.placeholder = 'Inserisci cilindrata (es. 15 cc)';
+				engineExtraInput.value = tempEngineValues['a Scoppio']; // ripristina se presente
+				engineExtraDiv.style.display = 'block';
+			} else {
+				engineExtraDiv.style.display = 'none';
+				engineExtraInput.value = '';
+			}
+		});
+
+        // FUNZIONI UTILI
         function getModels() {
             const stored = localStorage.getItem('collectionModels');
             if (!stored) return [];
-            try {
-                return JSON.parse(stored);
-            } catch {
-                return [];
-            }
+            try { return JSON.parse(stored); } catch { return []; }
         }
-        
-        // Salva i modelli
+
         function saveModels(models) {
             localStorage.setItem('collectionModels', JSON.stringify(models));
             updateLastSaveTime();
         }
-        
-        // Aggiorna ora ultimo salvataggio
+
         function updateLastSaveTime() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('it-IT');
             document.getElementById('lastSave').textContent = timeStr;
             localStorage.setItem('lastSaveTime', timeStr);
         }
-        
-        // Aggiorna statistiche
+
         function updateStats() {
             const models = getModels();
             document.getElementById('totalModels').textContent = models.length;
             document.getElementById('forSale').textContent = models.filter(m => m.forSale).length;
         }
-        
-        // Render dei modelli
+
         function renderModels() {
             const models = getModels();
             const container = document.getElementById('modelContainer');
             container.innerHTML = '';
-            
             updateStats();
-            
+
             models.forEach(model => {
-                if (!model || typeof model.id === 'undefined') return;
-                
                 const card = document.createElement('div');
                 card.className = 'model-card';
                 card.dataset.id = model.id;
-                
                 card.innerHTML = `
                     <div class="model-image" data-id="${model.id}">
                         ${model.image && model.image !== FALLBACK_IMAGE 
@@ -629,33 +654,25 @@
                         </div>
                     </div>
                 `;
-                
+
                 // Checkbox "da vendere"
-                const checkbox = card.querySelector(`#model-${model.id}`);
-                checkbox.addEventListener('change', () => {
-                    model.forSale = checkbox.checked;
+                card.querySelector(`#model-${model.id}`).addEventListener('change', e => {
+                    model.forSale = e.target.checked;
                     saveModels(models);
                     updateStats();
                 });
-                
-                // Click sull'immagine apre modifica modello
-				const imageElement = card.querySelector('.model-image');
-				imageElement.addEventListener('click', (e) => {
-					if (e.target.tagName !== 'INPUT') {
-						openEditModelModal(model.id);
-					}
-				});
-                
-                // Click sul nome per vedere i dettagli
-                const nameElement = card.querySelector('.model-name');
-                nameElement.addEventListener('click', () => {
-                    viewDetails(model.id);
+
+                // Click immagine => modifica
+                card.querySelector('.model-image').addEventListener('click', e => {
+                    if (e.target.tagName !== 'INPUT') openEditModelModal(model.id);
                 });
-                
+
+                // Click nome => dettagli
+                card.querySelector('.model-name').addEventListener('click', () => viewDetails(model.id));
+
                 container.appendChild(card);
             });
-            
-            // Drag & Drop con SortableJS
+
             if (models.length > 0) {
                 Sortable.create(container, {
                     animation: 200,
@@ -666,238 +683,156 @@
                         const newOrder = Array.from(container.children).map(card => {
                             const id = parseInt(card.dataset.id);
                             return models.find(m => m.id === id);
-                        }).filter(model => model !== undefined);
+                        }).filter(m => m !== undefined);
                         saveModels(newOrder);
                     }
                 });
             }
         }
-        
-        // Apri modale aggiungi modello
+
+        // APRI MODALE AGGIUNGI
         function openAddModelModal() {
+            currentEditingModelId = null;
+            document.getElementById('addModelForm').reset();
+            engineExtraDiv.style.display = 'none';
+            document.getElementById('submitBtn').textContent = "Aggiungi Modello";
             document.getElementById('addModelModal').classList.add('active');
         }
-        
-        // Chiudi modale aggiungi modello
+
+        // APRI MODALE MODIFICA
+        function openEditModelModal(modelId) {
+            const models = getModels();
+            const model = models.find(m => m.id === modelId);
+            if (!model) return;
+
+            currentEditingModelId = modelId;
+
+            document.getElementById('modelName').value = model.name;
+            document.getElementById('engineType').value = model.engineType;
+            document.getElementById('engineDescription').value = model.engineDescription;
+            engineExtraInput.value = model.engineExtra || '';
+            document.getElementById('radioType').value = model.radioType;
+            document.getElementById('radioFreq').value = model.radioFreq;
+            document.getElementById('radioMemory').value = model.radioMemory;
+            document.getElementById('radioBatteryType').value = model.radioBatteryType;
+            document.getElementById('receiverBattery').value = model.receiverBattery;
+            document.getElementById('modelImage').value = (model.image !== FALLBACK_IMAGE ? model.image : '');
+            document.getElementById('submitBtn').textContent = "Salva Modifiche";
+
+            engineTypeSelect.dispatchEvent(new Event('change'));
+            document.getElementById('addModelModal').classList.add('active');
+        }
+
+        // CHIUDI MODALE
         function closeAddModelModal() {
-			document.getElementById('addModelModal').classList.remove('active');
-			document.getElementById('addModelForm').reset();
-			document.getElementById('engineExtra').style.display = 'none';
-			currentEditingModelId = null;
-			document.getElementById('submitBtn').textContent = "Aggiungi Modello";
-		}
-        
-        // Aggiungi nuovo modello
+            document.getElementById('addModelModal').classList.remove('active');
+            document.getElementById('addModelForm').reset();
+            engineExtraDiv.style.display = 'none';
+            currentEditingModelId = null;
+            document.getElementById('submitBtn').textContent = "Aggiungi Modello";
+        }
+
+        // AGGIUNGI O SALVA MODELLO
         function addNewModel(e) {
-			e.preventDefault();
+            e.preventDefault();
 
-			const name = document.getElementById('modelName').value;
-			const engineDescription = document.getElementById('engineDescription').value;
-			const engineType = document.getElementById('engineType').value;
-			const engineExtra = document.getElementById('engineExtraInput').value;
-			const radioType = document.getElementById('radioType').value;
-			const radioFreq = document.getElementById('radioFreq').value;
-			const radioMemory = document.getElementById('radioMemory').value;
-			const radioBatteryType = document.getElementById('radioBatteryType').value;
-			const receiverBattery = document.getElementById('receiverBattery').value;
-			const image = document.getElementById('modelImage').value || FALLBACK_IMAGE;
+            const models = getModels();
+            const name = document.getElementById('modelName').value;
+            const engineType = document.getElementById('engineType').value;
+            const engineDescription = document.getElementById('engineDescription').value;
+            const engineExtra = engineExtraInput.value;
+            const radioType = document.getElementById('radioType').value;
+            const radioFreq = document.getElementById('radioFreq').value;
+            const radioMemory = document.getElementById('radioMemory').value;
+            const radioBatteryType = document.getElementById('radioBatteryType').value;
+            const receiverBattery = document.getElementById('receiverBattery').value;
+            const image = document.getElementById('modelImage').value || FALLBACK_IMAGE;
 
-			let models = getModels();
+            if (currentEditingModelId) {
+                const index = models.findIndex(m => m.id === currentEditingModelId);
+                if (index !== -1) {
+                    models[index] = { ...models[index], name, engineType, engineDescription, engineExtra, radioType, radioFreq, radioMemory, radioBatteryType, receiverBattery, image };
+                }
+            } else {
+                const id = models.length ? Math.max(...models.map(m => m.id)) + 1 : 1;
+                models.push({ id, name, engineType, engineDescription, engineExtra, radioType, radioFreq, radioMemory, radioBatteryType, receiverBattery, image, forSale: false });
+            }
 
-			if (currentEditingModelId) {
-				// MODIFICA
-				const index = models.findIndex(m => m.id === currentEditingModelId);
-				if (index !== -1) {
-					models[index] = {
-						...models[index],
-						name,
-						engineDescription,
-						engineType,
-						engineExtra,
-						radioType,
-						radioFreq,
-						radioMemory,
-						radioBatteryType,
-						receiverBattery,
-						image
-					};
-				}
-			} else {
-				// AGGIUNTA
-				const id = models.length > 0 ? Math.max(...models.map(m => m.id)) + 1 : 1;
-				models.push({
-					id,
-					name,
-					engineDescription,
-					engineType,
-					engineExtra,
-					radioType,
-					radioFreq,
-					radioMemory,
-					radioBatteryType,
-					receiverBattery,
-					image,
-					forSale: false
-				});
-			}
+            saveModels(models);
+            renderModels();
+            closeAddModelModal();
+        }
 
-			saveModels(models);
-			renderModels();
-			closeAddModelModal();
-		}
-        
-        // Rimuovi modelli selezionati
+        // ELIMINA MODELLI SELEZIONATI
         function removeSelectedModels() {
             const boxes = document.querySelectorAll('.delete-check:checked');
             if (!boxes.length) return alert("Nessun modello selezionato.");
-            if (confirm(`Vuoi eliminare ${boxes.length} modelli?`)) {
-                let models = getModels();
-                const ids = Array.from(boxes).map(cb => parseInt(cb.dataset.id));
-                models = models.filter(m => !ids.includes(m.id));
-                saveModels(models);
-                renderModels();
-            }
-        }
-        
-        // Ripristina collezione
-        function resetCollection() {
-            if (confirm("Sei sicuro di voler ripristinare la collezione? Tutti i dati verranno cancellati.")) {
-                localStorage.removeItem('collectionModels');
-                renderModels();
-            }
-        }
-        
-        // Apri modale modifica
-        function openEditModelModal(modelId) {
-			const models = getModels();
-			const model = models.find(m => m.id === modelId);
-			if (!model) return;
+            if (!confirm(`Vuoi eliminare ${boxes.length} modelli?`)) return;
 
-			currentEditingModelId = modelId;
-
-			document.getElementById('modelName').value = model.name;
-			document.getElementById('engineDescription').value = model.engineDescription;
-			document.getElementById('engineType').value = model.engineType;
-			document.getElementById('engineExtraInput').value = model.engineExtra;
-			document.getElementById('radioType').value = model.radioType;
-			document.getElementById('radioFreq').value = model.radioFreq;
-			document.getElementById('radioMemory').value = model.radioMemory;
-			document.getElementById('radioBatteryType').value = model.radioBatteryType;
-			document.getElementById('receiverBattery').value = model.receiverBattery;
-			document.getElementById('modelImage').value = (model.image !== FALLBACK_IMAGE ? model.image : '');
-
-			if (model.engineType === "elettrico") {
-				document.getElementById('engineExtraLabel').textContent = "Batteria del Motore";
-				document.getElementById('engineExtra').style.display = "block";
-			} else if (model.engineType === "a Scoppio") {
-				document.getElementById('engineExtraLabel').textContent = "Cilindrata del Motore";
-				document.getElementById('engineExtra').style.display = "block";
-			} else {
-				document.getElementById('engineExtra').style.display = "none";
-			}
-
-			document.getElementById('submitBtn').textContent = "Salva Modifiche";
-			document.getElementById('addModelModal').classList.add('active');
-		}
-
-        // Chiudi modale modifica immagine
-        function closeEditImageModal() {
-            document.getElementById('editImageModal').classList.remove('active');
-            currentEditingModelId = null;
-        }
-        
-        // Salva immagine
-        function saveImage() {
-            const url = document.getElementById('imageUrl').value || FALLBACK_IMAGE;
-            const models = getModels();
-            const index = models.findIndex(m => m.id === currentEditingModelId);
-            if (index !== -1) {
-                models[index].image = url;
-                saveModels(models);
-                renderModels();
-            }
-            closeEditImageModal();
-        }
-        
-        // Visualizza dettagli modello
-        function viewDetails(id) {
-			const models = getModels();
-			const model = models.find(m => m.id === id);
-			if (!model) return;
-
-			let detailsModal = document.getElementById('detailsModal');
-			if (!detailsModal) {
-				detailsModal = document.createElement('div');
-				detailsModal.id = 'detailsModal';
-				detailsModal.className = 'modal-overlay';
-				detailsModal.innerHTML = `
-					<div class="modal">
-						<button class="details-close-btn" 
-							onclick="document.getElementById('detailsModal').classList.remove('active')">
-							&times;
-						</button>
-						<div class="scroll-title-container">
-							<h2 id="detailName"></h2>
-						</div>
-						<div id="detailContent" class="model-details"></div>
-					</div>
-				`;
-
-				document.body.appendChild(detailsModal);
-			}
-
-			document.getElementById('detailName').textContent = model.name;
-			document.getElementById('detailContent').innerHTML = `
-				<p><strong>Tipo Motore:</strong> ${model.engineType.charAt(0).toUpperCase() + model.engineType.slice(1)}</p>
-				<p><strong>Descrizione Motore:</strong> ${model.engineDescription || 'Nessuna descrizione'}</p>
-				${model.engineExtra ? `<p><strong>${model.engineType === 'elettrico' ? 'Batteria' : 'Cilindrata'}:</strong> ${model.engineExtra}</p>` : ''}
-				<p><strong>Tipo Radio:</strong> ${model.radioType}</p>
-				${model.radioFreq ? `<p><strong>Frequenza Radio:</strong> ${model.radioFreq}</p>` : ''}
-				<p><strong>Memoria Radio Usata:</strong> ${model.radioMemory}</p>
-				<p><strong>Tipo Batteria Radio:</strong> ${model.radioBatteryType}</p>
-				${model.receiverBattery ? `<p><strong>Batterie Ricevente:</strong> ${model.receiverBattery}</p>` : ''}
-				<p><strong>Immagine:</strong></p>
-				<img src="${model.image}" style="max-width:100%; height:auto; border-radius:6px;">
-			`;
-
-			detailsModal.classList.add('active');
-		}
-		
-        // Inizializzazione
-        document.addEventListener('DOMContentLoaded', () => {
+            let models = getModels();
+            const ids = Array.from(boxes).map(cb => parseInt(cb.dataset.id));
+            models = models.filter(m => !ids.includes(m.id));
+            saveModels(models);
             renderModels();
-            
-            const lastSave = localStorage.getItem('lastSaveTime');
-            if (lastSave) document.getElementById('lastSave').textContent = lastSave;
-            
-            document.getElementById('addModelBtn').addEventListener('click', openAddModelModal);
-            document.getElementById('cancelBtn').addEventListener('click', closeAddModelModal);
-            document.getElementById('addModelForm').addEventListener('submit', addNewModel);
-            document.getElementById('deleteSelectedBtn').addEventListener('click', removeSelectedModels);
-            document.getElementById('resetCollectionBtn').addEventListener('click', resetCollection);
-            document.getElementById('cancelEditImageBtn').addEventListener('click', closeEditImageModal);
-            document.getElementById('saveImageBtn').addEventListener('click', saveImage);
-            
-            const engineTypeSelect = document.getElementById('engineType');
-            const engineExtraDiv = document.getElementById('engineExtra');
-            const engineExtraLabel = document.getElementById('engineExtraLabel');
-            const engineExtraInput = document.getElementById('engineExtraInput');
-            
-            engineTypeSelect.addEventListener('change', () => {
-                const val = engineTypeSelect.value;
-                if (val === 'elettrico') {
-                    engineExtraLabel.textContent = 'Batteria del Motore';
-                    engineExtraInput.placeholder = 'Inserisci capacità batteria (es. 2200 mAh)';
-                    engineExtraDiv.style.display = 'block';
-                } else if (val === 'a Scoppio') {
-                    engineExtraLabel.textContent = 'Cilindrata del Motore';
-                    engineExtraInput.placeholder = 'Inserisci cilindrata (es. 15 cc)';
-                    engineExtraDiv.style.display = 'block';
-                } else {
-                    engineExtraDiv.style.display = 'none';
-                }
-            });
-        });
-    </script>
+        }
+
+        // RIPRISTINA COLLEZIONE
+        function resetCollection() {
+            if (!confirm("Sei sicuro di voler ripristinare la collezione? Tutti i dati verranno cancellati.")) return;
+            localStorage.removeItem('collectionModels');
+            renderModels();
+        }
+
+        // VISUALIZZA DETTAGLI
+        function viewDetails(id) {
+            const models = getModels();
+            const model = models.find(m => m.id === id);
+            if (!model) return;
+
+            let detailsModal = document.getElementById('detailsModal');
+            if (!detailsModal) {
+                detailsModal = document.createElement('div');
+                detailsModal.id = 'detailsModal';
+                detailsModal.className = 'modal-overlay';
+                detailsModal.innerHTML = `
+                    <div class="modal">
+                        <button class="details-close-btn" onclick="document.getElementById('detailsModal').classList.remove('active')">&times;</button>
+                        <div class="scroll-title-container"><h2 id="detailName"></h2></div>
+                        <div id="detailContent" class="model-details"></div>
+                    </div>
+                `;
+                document.body.appendChild(detailsModal);
+            }
+
+            document.getElementById('detailName').textContent = model.name;
+            document.getElementById('detailContent').innerHTML = `
+                <p><strong>Tipo Motore:</strong> ${model.engineType.charAt(0).toUpperCase() + model.engineType.slice(1)}</p>
+                <p><strong>Descrizione Motore:</strong> ${model.engineDescription || 'Nessuna descrizione'}</p>
+                ${model.engineExtra ? `<p><strong>${model.engineType === 'elettrico' ? 'Batteria Motore' : 'Cilindrata Motore'}:</strong> ${model.engineExtra}</p>` : ''}
+                <p><strong>Tipo Radio:</strong> ${model.radioType}</p>
+                ${model.radioFreq ? `<p><strong>Frequenza Radio:</strong> ${model.radioFreq}</p>` : ''}
+                <p><strong>Memoria Radio Usata:</strong> ${model.radioMemory}</p>
+                <p><strong>Tipo Batteria Radio:</strong> ${model.radioBatteryType}</p>
+                ${model.receiverBattery ? `<p><strong>Batteria Ricevente:</strong> ${model.receiverBattery}</p>` : ''}
+                <p><strong>Immagine:</strong></p>
+                <img src="${model.image}" style="max-width:100%; height:auto; border-radius:6px;">
+            `;
+            detailsModal.classList.add('active');
+        }
+
+        // INIZIALIZZAZIONE
+        document.getElementById('addModelBtn').addEventListener('click', openAddModelModal);
+        document.getElementById('cancelBtn').addEventListener('click', closeAddModelModal);
+        document.getElementById('addModelForm').addEventListener('submit', addNewModel);
+        document.getElementById('deleteSelectedBtn').addEventListener('click', removeSelectedModels);
+        document.getElementById('resetCollectionBtn').addEventListener('click', resetCollection);
+
+        const lastSave = localStorage.getItem('lastSaveTime');
+        if (lastSave) document.getElementById('lastSave').textContent = lastSave;
+
+        renderModels();
+    });
+</script>
+
 </body>
 </html>

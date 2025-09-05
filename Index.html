@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collezione Aeromodelli</title>
+    <style>
+        /* ===== STILI BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        /* ===== STATISTICHE ===== */
+        .stats-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 70px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            padding: 15px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #6a89cc 0%, #4a69bd 100%);
+            color: white;
+            min-width: 150px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        /* ===== PULSANTI ===== */
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            min-width: 160px;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        button:hover {
+            background: #388E3C;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        #deleteSelectedBtn {
+            background: #F44336;
+        }
+        
+        #deleteSelectedBtn:hover {
+            background: #D32F2F;
+        }
+        
+        .reset-btn {
+            background: #FF9800 !important;
+        }
+        
+        .reset-btn:hover {
+            background: #F57C00 !important;
+        }
+        
+        /* ===== MODELLI ===== */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .model-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 400px;
+            position: relative;
+        }
+        
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+		.model-image {
+			flex: 0 0 70%;          /* altezza fissa della sezione immagine */
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			overflow: hidden;        /* evita che l’immagine esca fuori */
+			background: #f0f0f0;     /* sfondo neutro */
+		}
+
+		.model-image img {
+			max-width: 100%;
+			max-height: 100%;
+			object-fit: contain;     /* ridimensiona l’immagine dentro il box */
+			display: block;
+		}
+        
+        .model-image .no-image {
+            color: #888;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+        
+        .model-info {
+			flex: 1;
+			padding: 8px 12px 10px; /* ridotto il padding top e bottom */
+			display: flex;
+			flex-direction: column;
+			justify-content: center; /* centra verticalmente il contenuto */
+			overflow: hidden;
+			gap: 6px; /* spazio uniforme tra gli elementi */
+		}
+				
+		.model-name {
+			font-weight: bold;
+			margin-bottom: 10px; /* ridotto ulteriormente */
+			font-size: 16px;
+			line-height: 1.2; /* ridotto l'interlinea */
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			max-width: 100%;
+			cursor: pointer;
+			position: relative;
+			padding-right: 20px;
+		}
+        
+        .model-name::after {
+            content: "⋮";
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .model-type {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+        
+		.checkbox-container {
+			display: flex;
+			align-items: center;
+			padding: 2px 0; /* ridotto ulteriormente */
+			max-width: 100%;
+			min-height: 22px; /* altezza minima ridotta */
+		}
+        
+        .checkbox-container label {
+            margin-left: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            white-space: normal;
+            word-break: break-word;
+            flex: 1;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4CAF50;
+        }
+        
+        .save-status {
+            text-align: center;
+            color: white;
+            margin-top: 16px;
+            font-size: 18px;
+            opacity: 0.7;
+        }
+        
+        /* ===== MODALI ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+			position: relative;
+			background: white;
+			border-radius: 12px;
+			padding: 30px;
+			width: 90%;
+			max-width: 600px;
+			max-height: 80vh;
+			overflow-y: auto;
+			overflow-x: hidden; /* evita scroll orizzontale */
+			box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+		}
+        
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #2575fc;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .styled-select {
+            border-radius: 50px;
+            border: none;
+            background: #2575fc;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            appearance: none;
+            padding: 12px 20px;
+        }
+        
+        .styled-select:hover {
+            background: #1a5edb;
+        }
+        
+        .engine-description-input {
+            margin-top: 5px;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .form-actions button {
+            flex: 1;
+        }
+        
+        #cancelBtn {
+            background: #9e9e9e;
+        }
+        
+        #cancelBtn:hover {
+            background: #757575;
+        }
+        
+        /* ===== DETTAGLI MODELLO ===== */
+        #detailsModal .modal {
+            max-width: 600px;
+        }
+        
+        /* Contenitore dettagli */
+		.model-details {
+			white-space: normal;       /* va a capo se lungo */
+			word-wrap: break-word;
+			overflow-wrap: break-word;
+		}
+
+		/* Paragrafi dettagli */
+		.model-details p {
+			margin: 6px 0;
+			white-space: normal;
+			word-wrap: break-word;
+			overflow-wrap: break-word;
+		}
+        
+        .model-details img {
+            max-width: 100%;
+			max-height: 60vh; /* non supera il 60% dell’altezza finestra */
+			object-fit: contain;
+			display: block;
+			margin: 10px auto;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .models-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
+            }
+            
+            .model-card {
+                height: 350px;
+            }
+            
+            .model-image {
+                flex: 0 0 55%;
+            }
+            
+            .stats {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+                min-width: unset;
+            }
+        }
+		
+		/* Titolo + separatore */
+		.scroll-title-container {
+			border-bottom: 2px solid #2575fc;
+			margin-bottom: 20px;
+			padding-bottom: 4px;
+			text-align: left;
+			white-space: normal;       /* va a capo se lungo */
+			word-wrap: break-word;
+			overflow-wrap: break-word;
+		}
+
+		/* Titolo blu */
+		#detailName {
+			font-size: 1.6rem;
+			font-weight: bold;
+			color: #2575fc;
+			padding: 0;
+			margin: 30px 0 0 0; /* 30px di margine sopra per abbassarlo */
+		}
+
+		/* Pulsante X in alto a destra */
+		.details-close-btn {
+			position: absolute;
+			margin-top: 10px;
+			top: 10px;
+			right: 10px;
+			width: 32px;
+			height: 32px;
+			border-radius: 50%;
+			border: none;
+			background: #f44336;
+			color: white;
+			font-size: 18px;
+			font-weight: bold;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+			transition: background 0.3s, transform 0.2s;
+		}
+		.details-close-btn:hover {
+			background: #d32f2f;
+			transform: scale(1.1);
+		}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Aeromodelli Personali</h1>
+            <p class="subtitle">Aggiungi/Rimuovi Modelli e Segna i Modelli da Vendere</p>
+        </header>
+        
+        <div class="stats-container">
+            <div class="stats">
+                <div class="stat-box">
+                    <span class="stat-number" id="totalModels">0</span>
+                    <span>Modelli totali</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="forSale">0</span>
+                    <span>Da Vendere</span>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="addModelBtn">Aggiungi Modello</button>
+                <button id="deleteSelectedBtn">Elimina Modello/i</button>
+                <button id="resetCollectionBtn" class="reset-btn">Ripristina Collezione</button>
+            </div>
+        </div>
+        
+        <div class="models-grid" id="modelContainer"></div>
+        
+        <div class="save-status" id="saveStatus">
+            Ultimo salvataggio: <span id="lastSave">-</span>
+        </div>
+    </div>
+    
+    <!-- MODALE AGGIUNGI MODELLO -->
+    <div class="modal-overlay" id="addModelModal">
+        <div class="modal">
+            <h2>Aggiungi un nuovo modello</h2>
+            <form id="addModelForm">
+                <div class="form-group">
+                    <label for="modelName">Nome del Modello</label>
+                    <input type="text" id="modelName" required placeholder="Inserisci il nome del modello">
+                </div>
+                
+                <div class="form-group">
+                    <label for="engineType">Tipo di Motore</label>
+                    <select id="engineType" required class="styled-select">
+                        <option value="">Seleziona</option>
+                        <option value="elettrico">Elettrico</option>
+                        <option value="a Scoppio">A Scoppio</option>
+                    </select>
+                    <input type="text" id="engineDescription" class="engine-description-input" placeholder="Inserisci una breve descrizione del motore (opzionale)">
+                </div>
+                
+                <div class="form-group" id="engineExtra" style="display:none;">
+                    <label id="engineExtraLabel"></label>
+                    <input type="text" id="engineExtraInput" placeholder="">
+                </div>
+                
+                <div class="form-group">
+                    <label for="radioType">Tipo di Radio</label>
+                    <input type="text" id="radioType" required placeholder="Inserisci tipo di radio">
+                </div>
+                
+                <div class="form-group">
+                    <label for="radioFreq">Frequenza della Radio (opzionale)</label>
+                    <input type="text" id="radioFreq" placeholder="Inserisci frequenza se presente">
+                </div>
+                
+                <div class="form-group">
+                    <label for="radioMemory">Memoria Radio Usata</label>
+                    <input type="text" id="radioMemory" required placeholder="Inserisci memoria radio usata">
+                </div>
+                
+                <div class="form-group">
+                    <label for="radioBatteryType">Tipo di Batteria della Radio</label>
+                    <input type="text" id="radioBatteryType" required placeholder="Inserisci tipo di batteria radio">
+                </div>
+                
+                <div class="form-group">
+                    <label for="receiverBattery">Tipo di Batterie per Ricevente (opzionale)</label>
+                    <input type="text" id="receiverBattery" placeholder="Inserisci tipo di batteria per ricevente se presente">
+                </div>
+                
+                <div class="form-group">
+                    <label for="modelImage">URL immagine (opzionale)</label>
+                    <input type="url" id="modelImage" placeholder="https://esempio.com/immagine.jpg">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancelBtn">Annulla</button>
+                    <button type="submit" id="submitBtn">Aggiungi Modello</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- MODALE DETTAGLI MODELLO (verrà creata dinamicamente) -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <script>
+        const FALLBACK_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E";
+        let currentEditingModelId = null;
+        
+        // Recupera i modelli
+        function getModels() {
+            const stored = localStorage.getItem('collectionModels');
+            if (!stored) return [];
+            try {
+                return JSON.parse(stored);
+            } catch {
+                return [];
+            }
+        }
+        
+        // Salva i modelli
+        function saveModels(models) {
+            localStorage.setItem('collectionModels', JSON.stringify(models));
+            updateLastSaveTime();
+        }
+        
+        // Aggiorna ora ultimo salvataggio
+        function updateLastSaveTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('it-IT');
+            document.getElementById('lastSave').textContent = timeStr;
+            localStorage.setItem('lastSaveTime', timeStr);
+        }
+        
+        // Aggiorna statistiche
+        function updateStats() {
+            const models = getModels();
+            document.getElementById('totalModels').textContent = models.length;
+            document.getElementById('forSale').textContent = models.filter(m => m.forSale).length;
+        }
+        
+        // Render dei modelli
+        function renderModels() {
+            const models = getModels();
+            const container = document.getElementById('modelContainer');
+            container.innerHTML = '';
+            
+            updateStats();
+            
+            models.forEach(model => {
+                if (!model || typeof model.id === 'undefined') return;
+                
+                const card = document.createElement('div');
+                card.className = 'model-card';
+                card.dataset.id = model.id;
+                
+                card.innerHTML = `
+                    <div class="model-image" data-id="${model.id}">
+                        ${model.image && model.image !== FALLBACK_IMAGE 
+                            ? `<img src="${model.image}" alt="${model.name}" onerror="this.src='${FALLBACK_IMAGE}'">`
+                            : `<div class="no-image"><strong>Nessuna immagine</strong><br>Clicca per Modificare</div>`}
+                    </div>
+                    <div class="model-info">
+                        <div class="model-name" title="${model.name}">${model.name}</div>
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="model-${model.id}" ${model.forSale ? 'checked' : ''}>
+                            <label for="model-${model.id}">Modello da vendere</label>
+                        </div>
+                        <div class="checkbox-container">
+                            <input type="checkbox" class="delete-check" id="delete-${model.id}" data-id="${model.id}">
+                            <label for="delete-${model.id}">Rimuovere dalla collezione</label>
+                        </div>
+                    </div>
+                `;
+                
+                // Checkbox "da vendere"
+                const checkbox = card.querySelector(`#model-${model.id}`);
+                checkbox.addEventListener('change', () => {
+                    model.forSale = checkbox.checked;
+                    saveModels(models);
+                    updateStats();
+                });
+                
+                // Click sull'immagine apre modifica modello
+				const imageElement = card.querySelector('.model-image');
+				imageElement.addEventListener('click', (e) => {
+					if (e.target.tagName !== 'INPUT') {
+						openEditModelModal(model.id);
+					}
+				});
+                
+                // Click sul nome per vedere i dettagli
+                const nameElement = card.querySelector('.model-name');
+                nameElement.addEventListener('click', () => {
+                    viewDetails(model.id);
+                });
+                
+                container.appendChild(card);
+            });
+            
+            // Drag & Drop con SortableJS
+            if (models.length > 0) {
+                Sortable.create(container, {
+                    animation: 200,
+                    easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+                    chosenClass: 'chosen',
+                    ghostClass: 'ghost',
+                    onEnd: () => {
+                        const newOrder = Array.from(container.children).map(card => {
+                            const id = parseInt(card.dataset.id);
+                            return models.find(m => m.id === id);
+                        }).filter(model => model !== undefined);
+                        saveModels(newOrder);
+                    }
+                });
+            }
+        }
+        
+        // Apri modale aggiungi modello
+        function openAddModelModal() {
+            document.getElementById('addModelModal').classList.add('active');
+        }
+        
+        // Chiudi modale aggiungi modello
+        function closeAddModelModal() {
+			document.getElementById('addModelModal').classList.remove('active');
+			document.getElementById('addModelForm').reset();
+			document.getElementById('engineExtra').style.display = 'none';
+			currentEditingModelId = null;
+			document.getElementById('submitBtn').textContent = "Aggiungi Modello";
+		}
+        
+        // Aggiungi nuovo modello
+        function addNewModel(e) {
+			e.preventDefault();
+
+			const name = document.getElementById('modelName').value;
+			const engineDescription = document.getElementById('engineDescription').value;
+			const engineType = document.getElementById('engineType').value;
+			const engineExtra = document.getElementById('engineExtraInput').value;
+			const radioType = document.getElementById('radioType').value;
+			const radioFreq = document.getElementById('radioFreq').value;
+			const radioMemory = document.getElementById('radioMemory').value;
+			const radioBatteryType = document.getElementById('radioBatteryType').value;
+			const receiverBattery = document.getElementById('receiverBattery').value;
+			const image = document.getElementById('modelImage').value || FALLBACK_IMAGE;
+
+			let models = getModels();
+
+			if (currentEditingModelId) {
+				// MODIFICA
+				const index = models.findIndex(m => m.id === currentEditingModelId);
+				if (index !== -1) {
+					models[index] = {
+						...models[index],
+						name,
+						engineDescription,
+						engineType,
+						engineExtra,
+						radioType,
+						radioFreq,
+						radioMemory,
+						radioBatteryType,
+						receiverBattery,
+						image
+					};
+				}
+			} else {
+				// AGGIUNTA
+				const id = models.length > 0 ? Math.max(...models.map(m => m.id)) + 1 : 1;
+				models.push({
+					id,
+					name,
+					engineDescription,
+					engineType,
+					engineExtra,
+					radioType,
+					radioFreq,
+					radioMemory,
+					radioBatteryType,
+					receiverBattery,
+					image,
+					forSale: false
+				});
+			}
+
+			saveModels(models);
+			renderModels();
+			closeAddModelModal();
+		}
+        
+        // Rimuovi modelli selezionati
+        function removeSelectedModels() {
+            const boxes = document.querySelectorAll('.delete-check:checked');
+            if (!boxes.length) return alert("Nessun modello selezionato.");
+            if (confirm(`Vuoi eliminare ${boxes.length} modelli?`)) {
+                let models = getModels();
+                const ids = Array.from(boxes).map(cb => parseInt(cb.dataset.id));
+                models = models.filter(m => !ids.includes(m.id));
+                saveModels(models);
+                renderModels();
+            }
+        }
+        
+        // Ripristina collezione
+        function resetCollection() {
+            if (confirm("Sei sicuro di voler ripristinare la collezione? Tutti i dati verranno cancellati.")) {
+                localStorage.removeItem('collectionModels');
+                renderModels();
+            }
+        }
+        
+        // Apri modale modifica
+        function openEditModelModal(modelId) {
+			const models = getModels();
+			const model = models.find(m => m.id === modelId);
+			if (!model) return;
+
+			currentEditingModelId = modelId;
+
+			document.getElementById('modelName').value = model.name;
+			document.getElementById('engineDescription').value = model.engineDescription;
+			document.getElementById('engineType').value = model.engineType;
+			document.getElementById('engineExtraInput').value = model.engineExtra;
+			document.getElementById('radioType').value = model.radioType;
+			document.getElementById('radioFreq').value = model.radioFreq;
+			document.getElementById('radioMemory').value = model.radioMemory;
+			document.getElementById('radioBatteryType').value = model.radioBatteryType;
+			document.getElementById('receiverBattery').value = model.receiverBattery;
+			document.getElementById('modelImage').value = (model.image !== FALLBACK_IMAGE ? model.image : '');
+
+			if (model.engineType === "elettrico") {
+				document.getElementById('engineExtraLabel').textContent = "Batteria del Motore";
+				document.getElementById('engineExtra').style.display = "block";
+			} else if (model.engineType === "a Scoppio") {
+				document.getElementById('engineExtraLabel').textContent = "Cilindrata del Motore";
+				document.getElementById('engineExtra').style.display = "block";
+			} else {
+				document.getElementById('engineExtra').style.display = "none";
+			}
+
+			document.getElementById('submitBtn').textContent = "Salva Modifiche";
+			document.getElementById('addModelModal').classList.add('active');
+		}
+
+        // Chiudi modale modifica immagine
+        function closeEditImageModal() {
+            document.getElementById('editImageModal').classList.remove('active');
+            currentEditingModelId = null;
+        }
+        
+        // Salva immagine
+        function saveImage() {
+            const url = document.getElementById('imageUrl').value || FALLBACK_IMAGE;
+            const models = getModels();
+            const index = models.findIndex(m => m.id === currentEditingModelId);
+            if (index !== -1) {
+                models[index].image = url;
+                saveModels(models);
+                renderModels();
+            }
+            closeEditImageModal();
+        }
+        
+        // Visualizza dettagli modello
+        function viewDetails(id) {
+			const models = getModels();
+			const model = models.find(m => m.id === id);
+			if (!model) return;
+
+			let detailsModal = document.getElementById('detailsModal');
+			if (!detailsModal) {
+				detailsModal = document.createElement('div');
+				detailsModal.id = 'detailsModal';
+				detailsModal.className = 'modal-overlay';
+				detailsModal.innerHTML = `
+					<div class="modal">
+						<button class="details-close-btn" 
+							onclick="document.getElementById('detailsModal').classList.remove('active')">
+							&times;
+						</button>
+						<div class="scroll-title-container">
+							<h2 id="detailName"></h2>
+						</div>
+						<div id="detailContent" class="model-details"></div>
+					</div>
+				`;
+
+				document.body.appendChild(detailsModal);
+			}
+
+			document.getElementById('detailName').textContent = model.name;
+			document.getElementById('detailContent').innerHTML = `
+				<p><strong>Tipo Motore:</strong> ${model.engineType.charAt(0).toUpperCase() + model.engineType.slice(1)}</p>
+				<p><strong>Descrizione Motore:</strong> ${model.engineDescription || 'Nessuna descrizione'}</p>
+				${model.engineExtra ? `<p><strong>${model.engineType === 'elettrico' ? 'Batteria' : 'Cilindrata'}:</strong> ${model.engineExtra}</p>` : ''}
+				<p><strong>Tipo Radio:</strong> ${model.radioType}</p>
+				${model.radioFreq ? `<p><strong>Frequenza Radio:</strong> ${model.radioFreq}</p>` : ''}
+				<p><strong>Memoria Radio Usata:</strong> ${model.radioMemory}</p>
+				<p><strong>Tipo Batteria Radio:</strong> ${model.radioBatteryType}</p>
+				${model.receiverBattery ? `<p><strong>Batterie Ricevente:</strong> ${model.receiverBattery}</p>` : ''}
+				<p><strong>Immagine:</strong></p>
+				<img src="${model.image}" style="max-width:100%; height:auto; border-radius:6px;">
+			`;
+
+			detailsModal.classList.add('active');
+		}
+		
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', () => {
+            renderModels();
+            
+            const lastSave = localStorage.getItem('lastSaveTime');
+            if (lastSave) document.getElementById('lastSave').textContent = lastSave;
+            
+            document.getElementById('addModelBtn').addEventListener('click', openAddModelModal);
+            document.getElementById('cancelBtn').addEventListener('click', closeAddModelModal);
+            document.getElementById('addModelForm').addEventListener('submit', addNewModel);
+            document.getElementById('deleteSelectedBtn').addEventListener('click', removeSelectedModels);
+            document.getElementById('resetCollectionBtn').addEventListener('click', resetCollection);
+            document.getElementById('cancelEditImageBtn').addEventListener('click', closeEditImageModal);
+            document.getElementById('saveImageBtn').addEventListener('click', saveImage);
+            
+            const engineTypeSelect = document.getElementById('engineType');
+            const engineExtraDiv = document.getElementById('engineExtra');
+            const engineExtraLabel = document.getElementById('engineExtraLabel');
+            const engineExtraInput = document.getElementById('engineExtraInput');
+            
+            engineTypeSelect.addEventListener('change', () => {
+                const val = engineTypeSelect.value;
+                if (val === 'elettrico') {
+                    engineExtraLabel.textContent = 'Batteria del Motore';
+                    engineExtraInput.placeholder = 'Inserisci capacità batteria (es. 2200 mAh)';
+                    engineExtraDiv.style.display = 'block';
+                } else if (val === 'a Scoppio') {
+                    engineExtraLabel.textContent = 'Cilindrata del Motore';
+                    engineExtraInput.placeholder = 'Inserisci cilindrata (es. 15 cc)';
+                    engineExtraDiv.style.display = 'block';
+                } else {
+                    engineExtraDiv.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
